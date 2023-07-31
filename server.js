@@ -1,13 +1,13 @@
-const port = process.env.PORT || 3001;
+const port = process.env.PORT || 3030;
 const errorProbability = process.env.ERROR_PROBABILITY || 0;
 const http = require("http");
 const express = require("express");
 const path = require("path");
 const cors = require("cors");
 const fs = require("fs");
-const { log } = require("console");
-
 const app = express();
+const WebSocket = require("ws");
+const { generateStatus } = require("./files/blockDz/table-status");
 
 app.use(express.json({ limit: "50mb" }));
 app.use(
@@ -33,7 +33,7 @@ app.get("/files/blockDz/table", (req, res) => {
     setTimeout(() => {
       res.setHeader("Content-Type", "application/json");
       res.status(200).send(json);
-    }, 100);
+    }, 200);
   }
 });
 
@@ -58,6 +58,33 @@ app.get("/blockDz/xlsx", (req, res) => {
 });
 
 const server = http.createServer(app);
+
+const webSocketServer = new WebSocket.Server({ server });
+
+const dispatchEvent = (message) => {
+  const json = JSON.parse(message);
+  webSocketServer.clients.forEach((client) =>
+    client.send(JSON.stringify(json))
+  );
+};
+
+webSocketServer.on("connection", (ws) => {
+  ws.on("message", (m) => dispatchEvent(m));
+
+  webSocketServer.clients.forEach((client) => {
+    const intervalId = setInterval(
+      // () => client.send(JSON.stringify("pong!")),
+      () => client.send(JSON.stringify(generateStatus())),
+      500
+    );
+    setTimeout(() => clearInterval(intervalId), 30000);
+  });
+
+  ws.on("error", (e) => ws.send(e));
+
+  ws.send(JSON.stringify("WebSocket server works"));
+});
+
 server.listen(port, (err) => {
   if (err) {
     return console.log(err);
