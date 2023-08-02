@@ -70,11 +70,13 @@ const io = new Server(server, {
 });
 
 io.on("connection", (socket) => {
-  const intervalId = setInterval(
-    () => socket.emit("status", JSON.stringify(generateStatus())),
-    1500
-  );
-  setTimeout(() => clearInterval(intervalId), 30000);
+  setTimeout(() => {
+    const intervalId = setInterval(
+      () => socket.emit("status", JSON.stringify(generateStatus())),
+      2000
+    );
+    // setTimeout(() => clearInterval(intervalId), 600000);
+  }, 2000);
 
   socket.on("error", (e) => console.log(e));
 
