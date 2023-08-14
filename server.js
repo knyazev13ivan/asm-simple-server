@@ -73,7 +73,7 @@ io.on("connection", (socket) => {
   setTimeout(() => {
     const intervalId = setInterval(
       () => socket.emit("status", JSON.stringify(generateStatus())),
-      2000
+      1000
     );
     // setTimeout(() => clearInterval(intervalId), 600000);
   }, 2000);
