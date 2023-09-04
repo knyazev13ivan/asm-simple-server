@@ -6,17 +6,19 @@ const path = require("path");
 const cors = require("cors");
 const fs = require("fs");
 const { Server } = require("socket.io");
-const WebSocket = require("ws");
 const { generateStatus } = require("./files/blockDz/table-status");
+const { generateEvent } = require("./files/blockDz/events");
 
 const app = express();
 
 app.use(express.json({ limit: "50mb" }));
+
 app.use(
-  express.urlencoded({
-    extended: true,
-  })
+    express.urlencoded({
+      extended: true,
+    })
 );
+
 app.use(cors());
 
 function generateError() {
@@ -28,8 +30,8 @@ app.get("/files/blockDz/table", (req, res) => {
   const isError = generateError(res);
   if (!isError) {
     const json = fs.readFileSync(
-      path.join(__dirname, "/files/blockDz/table.json"),
-      "utf8"
+        path.join(__dirname, "/files/blockDz/table.json"),
+        "utf8"
     );
 
     setTimeout(() => {
@@ -61,8 +63,6 @@ app.get("/blockDz/xlsx", (req, res) => {
 
 const server = http.createServer(app);
 
-// const webSocketServer = new WebSocket.Server({ server });
-
 const io = new Server(server, {
   cors: {
     origin: "http://localhost:3000",
@@ -78,34 +78,12 @@ io.on("connection", (socket) => {
     // setTimeout(() => clearInterval(intervalId), 600000);
   }, 2000);
 
+  setInterval(() => socket.emit('events', generateEvent()), 3500)
+
   socket.on("error", (e) => console.log(e));
 
   socket.emit("work", JSON.stringify("WebSocket server works"));
 });
-
-// const dispatchEvent = (message) => {
-//   const json = JSON.parse(message);
-//   webSocketServer.clients.forEach((client) =>
-//     client.send(JSON.stringify(json))
-//   );
-// };
-
-// webSocketServer.on("connection", (ws) => {
-//   ws.on("message", (m) => dispatchEvent(m));
-
-//   webSocketServer.clients.forEach((client) => {
-//     const intervalId = setInterval(
-//       // () => client.send(JSON.stringify("pong!")),
-//       () => client.send(JSON.stringify(generateStatus())),
-//       1500
-//     );
-//     setTimeout(() => clearInterval(intervalId), 30000);
-//   });
-
-//   ws.on("error", (e) => ws.send(e));
-
-//   ws.send(JSON.stringify("WebSocket server works"));
-// });
 
 server.listen(port, (err) => {
   if (err) {
