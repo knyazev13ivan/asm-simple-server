@@ -70,15 +70,13 @@ const io = new Server(server, {
 });
 
 io.on("connection", (socket) => {
-  setTimeout(() => {
-    const intervalId = setInterval(
-      () => socket.emit("status", JSON.stringify(generateStatus())),
-      1000
-    );
-    // setTimeout(() => clearInterval(intervalId), 600000);
-  }, 2000);
+  function sendEvents() {
+    const event = setInterval(() => socket.emit('events', generateEvent()), 2000);
+    setTimeout(() => clearInterval(event), 120000)
+    return event
+  }
 
-  setInterval(() => socket.emit('events', generateEvent()), 3500)
+  sendEvents()
 
   socket.on("error", (e) => console.log(e));
 
