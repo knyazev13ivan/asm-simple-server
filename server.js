@@ -8,6 +8,8 @@ const fs = require("fs");
 const { Server } = require("socket.io");
 const { generateStatus } = require("./files/blockDz/table-status");
 const { generateEvent } = require("./files/blockDz/events");
+const {generatePks} = require("./files/blockSem/pks");
+const {generateSemEvents} = require("./files/blockSem/event");
 
 const app = express();
 
@@ -76,6 +78,20 @@ io.on("connection", (socket) => {
     return event
   }
 
+  function sendBlockSemPks() {
+    const semPks = setInterval(() => socket.emit('pksEvent', generatePks()), 2000);
+    setTimeout(() => clearInterval(semPks), 120000)
+    return semPks
+  }
+
+  function sendBlockSemEvent() {
+    const semEvent = setInterval(() => socket.emit('semEvent', generateSemEvents()), 2000);
+    setTimeout(() => clearInterval(semEvent), 120000)
+    return semEvent
+  }
+
+  sendBlockSemPks()
+  sendBlockSemEvent()
   sendEvents()
 
   socket.on("error", (e) => console.log(e));
