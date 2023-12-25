@@ -8,17 +8,18 @@ const fs = require("fs");
 const { Server } = require("socket.io");
 const { generateStatus } = require("./files/blockDz/table-status");
 const { generateEvent } = require("./files/blockDz/events");
-const {generatePks} = require("./files/blockSem/pks");
-const {generateSemEvents} = require("./files/blockSem/event");
+const { generatePks } = require("./files/blockSem/pks");
+const { generateSemEvents } = require("./files/blockSem/event");
+const { stations } = require("./files/blockSem/station-name");
 
 const app = express();
 
 app.use(express.json({ limit: "50mb" }));
 
 app.use(
-    express.urlencoded({
-      extended: true,
-    })
+  express.urlencoded({
+    extended: true,
+  })
 );
 
 app.use(cors());
@@ -32,8 +33,8 @@ app.get("/files/blockDz/table", (req, res) => {
   const isError = generateError(res);
   if (!isError) {
     const json = fs.readFileSync(
-        path.join(__dirname, "/files/blockDz/table.json"),
-        "utf8"
+      path.join(__dirname, "/files/blockDz/table.json"),
+      "utf8"
     );
 
     setTimeout(() => {
@@ -74,19 +75,28 @@ const io = new Server(server, {
 io.on("connection", (socket) => {
   function sendEvents() {
     const event = setInterval(() => socket.emit('events', generateEvent()), 2000);
-    setTimeout(() => clearInterval(event), 120000)
+    setTimeout(() => clearInterval(event), 12000)
     return event
   }
 
   function sendBlockSemPks() {
-    const semPks = setInterval(() => socket.emit('pksEvent', generatePks()), 2000);
-    setTimeout(() => clearInterval(semPks), 120000)
+    let isFistEvent = true;
+    const semPks = setInterval(() => {
+      socket.emit('pksEvent', isFistEvent ? generatePks() : [generatePks()[Math.floor(Math.random() * 20)]])
+      isFistEvent = false
+
+    }, 2000);
+    setTimeout(() => clearInterval(semPks), 12000)
     return semPks
   }
 
   function sendBlockSemEvent() {
-    const semEvent = setInterval(() => socket.emit('semEvent', generateSemEvents()), 2000);
-    setTimeout(() => clearInterval(semEvent), 120000)
+    let isFistEvent = true;
+    const semEvent = setInterval(() => {
+      socket.emit('semEvent', isFistEvent ? generateSemEvents() : [generateSemEvents()[Math.floor(Math.random() * stations.length)]]);
+      isFistEvent = false
+    }, 2000);
+    setTimeout(() => clearInterval(semEvent), 12000)
     return semEvent
   }
 
@@ -95,6 +105,9 @@ io.on("connection", (socket) => {
   sendEvents()
 
   socket.on("error", (e) => console.log(e));
+
+  socket.on("pksDiscreteness", (e) => console.log(e, 'pksDiscreteness'));
+  socket.on("semDiscreteness", (e) => console.log(e, 'semDiscreteness'));
 
   socket.emit("work", JSON.stringify("WebSocket server works"));
 });
